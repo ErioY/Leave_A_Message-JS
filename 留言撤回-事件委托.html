@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+    div {
+        width: 400px;
+        height: 500px;
+        margin: 50px auto;
+        background: -webkit-linear-gradient(right,rgba(247,26,185,0.37 ),rgba(3,169,244,0.8)); /* 谷歌浏览器 */
+    }
+    input {
+        width: 190px;
+        height: 30px;
+        margin: 10px 0 10px 30px;
+    }
+    
+    button {
+        width: 100px;
+        height: 32px;
+        background: white;
+        border: none;
+        font-size: 15px;
+        cursor: pointer;
+    }
+    button:hover {
+        font-size: 18px;
+    }
+    /* 按压效果 */
+    button:active {
+        box-shadow: 0 5px #c88ee3;
+        transform: translateY(4px);
+    }
+    button:nth-of-type(2) {
+        margin: 0 20px 0 40px;
+    }
+    ul {
+        margin: 0;
+        padding: 0;
+        margin-left: 100px;
+    }
+    li {
+        cursor: pointer;
+    }
+    li>button {
+        margin: 5px 10px;
+    }
+    input {
+        margin-bottom: 10px;
+    }
+    </style>
+</head>
+<body>
+    <div>
+        <input type="text">
+        <button>添加留言</button>
+        <button>批量删除</button>
+        <button>全部删除</button>
+        <ul class="clearfix"></ul>
+    </div>
+    <script>
+    // 做一个点击添加留言效果，
+    // (1) 用事件委托的方法给每个添加的留言设置一个撤回功能；
+    // (2) 实现批量删除功能
+    // (3) 实现全部删除功能
+    var oUl = document.querySelector("ul");
+    var aBtn = document.querySelectorAll("button");
+    var oTe = document.querySelector("input");
+    var len = 0; // 统计留言总数
+
+    // 点击添加留言
+    aBtn[0].onclick = function() {
+        var oLi = document.createElement("li");
+        oLi.innerHTML = oTe.value;
+        oUl.insertBefore(oLi,oUl.childNodes[0]);
+        // 添加撤回按钮
+        var oBtnBack = document.createElement("button");
+        oBtnBack.innerHTML = "撤回";
+        oLi.appendChild(oBtnBack);
+        len++; 
+        // 保证只显示5条留言
+        if (len > 5) {
+            oUl.lastChild.remove();
+        }
+        // （1）调用事件委托函数实现撤回功能
+        delegation(oLi,"button","click",function() {
+            oUl.removeChild(oLi);
+            len--; // 将留言条数减一
+            // console.log(len);
+        });
+        oTe.value = "";
+    }
+
+    // 点击li时，背景颜色变为黄色
+    delegation(oUl,"li","click",function() {
+        this.classList.toggle("sign");
+        this.style.background = "yellow";
+    })
+
+    // 批量删除
+    aBtn[1].onclick = function() {
+        var aLi = document.getElementsByClassName("sign");
+        // 从后开始删，保证所选留言都被删除
+        for (var i = aLi.length - 1; i >= 0; i--) {
+            oUl.removeChild(aLi[i]);
+        }
+        len = document.querySelectorAll("li").length;
+    }
+
+    // 全部删除
+    aBtn[2].onclick = function() {
+        var aLi = document.querySelectorAll("li");
+        for (var i = aLi.length - 1; i >= 0; i--) {
+            oUl.removeChild(aLi[i]);
+        }
+        len = 0;
+    }
+
+    // 事件监听器兼容写法
+    function bind(obj,attr,fn) { // obj表示对象,attr表示事件,fn表示执行的时间函数
+        for (var i = 0; i < fn.length; i++) {
+            if (document.attachEvent) {
+                obj.attachEvent("on" + attr,function() {
+                    fn[fn.length - 1 - i].call(obj);
+                });
+            } else {
+                obj.addEventListener(attr,fn[i],false);
+            }
+        }
+    }
+
+    // 事件委托封装(依托于事件监听器bind()函数)
+    function delegation(fEle,ele,attr,fn) {  // fEle表示元素，ele是标签名，要加引号，可以表示为 "li.box",
+        bind(fEle,attr,[function(ev) {
+            ev = ev || event;
+            var tar = ev.target || ev.srcElement;
+            var nodeList = fEle.querySelectorAll(ele);
+            for (var i = 0; i < nodeList.length; i++) {
+                if (nodeList[i] == tar) {
+                    fn.call(tar);
+                }
+            }
+        }]);
+    }
+    </script>
+</body>
+</html>
